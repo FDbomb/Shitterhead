@@ -1,2 +1,2 @@
 # Shitterhead
-Multiplayer python implementation of Uno meets Shithead, 
+Multiplayer python implementation of Uno meets Shithead
