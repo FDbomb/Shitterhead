@@ -1,8 +1,8 @@
 from random import shuffle
 from collections import deque
 
-from card import Card
-from data import Data
+from game.card import Card
+from game.data import Data
 
 # https://www.mixcloud.com/PAUL_DI/alison-wonderland-on-mix-up-triple-j-jjj-09022017/
 

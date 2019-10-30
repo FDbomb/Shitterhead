@@ -1,4 +1,4 @@
-from game import *
+from game.game import *
 
 
 # Helper Functions #
@@ -69,8 +69,9 @@ def burning_and_reinject(g):
 def main():
 
 	g = set_up()
-	# test_inital_decks(g)
-	# burning_and_reinject(g)
+	test_inital_decks(g)
+	burning_and_reinject(g)
 
 
-main()
+if __name__ == '__main__':
+	main()
