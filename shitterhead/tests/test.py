@@ -4,7 +4,6 @@ from game.game import *
 # Helper Functions #
 def set_up():
 	g = Game(3)
-	g.pickup_deck.deal_cards()
 
 	return g
 

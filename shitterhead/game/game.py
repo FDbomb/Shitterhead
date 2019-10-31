@@ -2,9 +2,8 @@ from random import shuffle
 from collections import deque
 
 from game.card import Card
-from game.data import Data
-
-# https://www.mixcloud.com/PAUL_DI/alison-wonderland-on-mix-up-triple-j-jjj-09022017/
+from game.action import Action
+# from game.data import Data  # Will be used for network data
 
 # CONTSTANTS #
 FACE_DOWN_CARDS = 3
@@ -27,8 +26,19 @@ class Player:
 	def __str__(self):
 		return 'Player ' + str(self.id)
 
+	def pickle_into_data(self):
+		pass
+
+	def unpickle_update_player(self):
+		# if move is play card
+		# then self.play
+		# if move is pickup, then self.pickup
+		pass
+
 	def play_card(self, index):  # make index an array to play multiple cards, or card instead of index, return first match?
-		self.game.discard_pile.add_card(self.in_hand.pop(index))
+		action = Action('Play', self.in_hand.pop(index))
+		move_return = self.game.do_move(self.id, action)  # do_move will return the card if not valid move, otherwise empty
+		self.in_hand.extend(move_return)
 
 
 class Deck:
@@ -65,6 +75,7 @@ class PickupDeck(Deck):
 			for j in ['Skip', 'Reverse', "Draw 2"]:
 				to_append = [Card(j, i, 'uno')] * 2
 				self.deck.extend(to_append)
+
 		# Generate Draw 4 cards
 		for i in range(4):
 			self.deck.append(Card('Draw 4', 'Black', 'uno'))
@@ -124,9 +135,11 @@ class Game:
 		# Create player hands
 		self.no_players = no_players  # Always >= 2
 		self.players = []
-
 		for i in range(self.no_players):
 			self.players.append(Player(self, i))
+
+		# Deal cards to players and pickup pile
+		self.pickup_deck.deal_cards()
 
 		# Store various game states
 		self.current_turn = 0
@@ -153,7 +166,44 @@ class Game:
 		elif no_face_down != 0:
 			return self.players[player_id].face_down
 		else:
-			return 'PLayer id win!!!!!!!!!'
+			return 'Player id win!!!!!!!!!'
+
+	def is_valid_move(self, player, move):
+
+		action = move.action
+		is_valid = False
+
+		if move.action == 'Draw':
+			is_valid = True
+		elif move.action == 'Play':
+			if len(move.cards) > 1:
+				# check they are the same value
+				pass
+			if True:  # If player != current player
+				action = 'Burn'
+				pass
+				# check you can burn, and send burn action
+			is_valid = True
+		else:
+			is_valid = False  # Again how did we get here, can remove else block I googled it
+
+		return action, is_valid
+
+	def do_move(self, player, move):
+		action, is_valid = self.is_valid_move(player, move)
+
+		if action == 'Draw':
+			if is_valid:
+				return [self.pickup_deck.deck[0]]
+			else:
+				return []
+		elif action == 'Play':
+			if is_valid:
+				return []
+			else:
+				return [move.cards]
+		else:
+			pass  # How did we get here?
 
 
 # From https://codereview.stackexchange.com/questions/82103/ascii-fication-of-playing-cards
@@ -217,7 +267,6 @@ def ascii_version_of_cards(cards):
 # MAIN #
 def main():
 	g = Game(3)
-	g.pickup_deck.deal_cards()
 
 
 if __name__ == '__main__':
