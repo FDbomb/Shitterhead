@@ -1,4 +1,6 @@
 class Card:
+	mapping = {'4': 0, '5': 1, '6': 2, '7': 3, '8': 4, '9': 5, 'Jack': 6, 'Queen': 7, 'King': 8, 'Ace': 9}
+
 	def __init__(self, val, suit, kind):
 		self.value = val
 		self.suit = suit  # includes colour for UNO cards
@@ -11,32 +13,35 @@ class Card:
 		else:
 			return self.value + ' of ' + self.suit
 
-	def __lt__(self, other_card):
-		if self.type == 'uno' or self.value == 3:
-			return True
-		else:
-			return self.value < other_card.value
-
-	def __le__(self, other_card):
-		if self.type == 'uno' or self.value == 3:
-			return True
-		else:
-			return self.value <= other_card.value
-
-	def __eq__(self, other_card):
-		return self.value == other_card.value
-
-	def __ne__(self, other_card):
-		return self.value != other_card.value
-
-	def __gt__(self, other_card):
-		if self.type == 'uno' or self.value == 3:
-			return True
-		else:
-			return self.value > other_card.value
-
 	def __ge__(self, other_card):
-		if self.type == 'uno' or self.value == 3:
+		val = self.value
+		comp_val = other_card.value
+
+		if val == '3':
 			return True
+
+		elif val == 'Draw 2':
+			if comp_val == 'Draw 4':
+				return False
+			else:
+				return True
+
+		elif val == 'Draw 4':
+			if comp_val == 'Draw 2':
+				return False
+			else:
+				return True
+
+		elif val == '2' or val == '10' or self.type == 'uno':
+			if comp_val == 'Draw 4' or comp_val == 'Draw 2':
+				return False
+			else:
+				return True
+
 		else:
-			return self.value >= other_card.value
+			if comp_val == 'Draw 2' or comp_val == 'Draw 4':
+				return False
+			elif comp_val == '7':
+				return self.mapping[val] <= self.mapping[comp_val]
+			else:
+				return self.mapping[val] >= self.mapping[comp_val]

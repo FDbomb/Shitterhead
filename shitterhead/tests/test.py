@@ -10,55 +10,67 @@ def set_up():
 
 def print_decks(g):
 
+	print('\n')
 	for i in g.players:
 		print(i, ':')
 		ascii_version_of_cards(i.in_hand)
 
-	print('Pickup Deck :')
+	print('\nPickup Deck :')
 	ascii_version_of_cards(g.pickup_deck.deck)
 
-	print('Discard pile :')
+	print('\nDiscard pile :')
 	ascii_version_of_cards(g.discard_pile.deck)
 
-	print('Burned Cards :')
+	print('\nBurned Cards :')
 	ascii_version_of_cards(g.burned_pile.deck)
 
 
 # Test Functions #
 def test_inital_decks(g):
-	print(len(g.pickup_deck))
-	print(len(g.players[0].in_hand))
-	print(len(g.discard_pile))
 
-	print("\n\n\n")
+	print('\n\n')
+	print('# in pickup  :', len(g.pickup_deck))
+	print('# in player0 :', len(g.players[0].in_hand))
+	print('# in discard :', len(g.discard_pile))
 
+	print('\n\n')
+	print('Player 0 hand')
 	ascii_version_of_cards(g.players[0].in_hand)
 
-	print("\n\n\n")
+	print('\n\n..Changing game states, adding 4 and player 0 turn now..')
+	g.active_card = Card('4', 'Hearts', 'playing')
+	g.current_player = 0
 
-	g.players[0].play_card(0)
+	print('..Now playing card 0 (for player 0)..')
+	g.players[0].play_cards([0])
+
+	print('\n\nDiscard pile (should be old card 0)')
 	ascii_version_of_cards(g.discard_pile.deck)
 
-	print("\n\n\n")
-
+	print('\n\n')
+	print('Player 0 hand now (should be down 1 card')
 	ascii_version_of_cards(g.players[0].in_hand)
 
-	print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-
+	print('\n\n')
+	print('Discard pile:')
 	for i in g.discard_pile.deck:
-		print(i)
+		print('		', i)
 
-	print("\n\n\n")
-
+	print('\n\n')
+	print('Pickup Deck:')
 	for i in g.pickup_deck.deck:
-		print(i)
+		print('		', i)
 
 
 def burning_and_reinject(g):
-	g.players[0].play_card(0)
+
+	print('\n\n')
+	print('\n..Again playing card 0 (for player 0)..\n')
+	g.players[0].play_cards([0])
 
 	print_decks(g)
 
+	print('\n..Burning the discard_pile and filling the pickup with burned cards..\n')
 	g.discard_pile.burn()
 	g.burned_pile.re_inject()
 
