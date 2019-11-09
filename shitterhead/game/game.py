@@ -222,6 +222,7 @@ class Game:
 						# Check for burns
 						if no_cards + self.same_active_cards == 4:
 							action = 'Burn'
+							print('Yeet')
 						elif cards[0].value == '10':
 							action = 'Burn'
 						elif no_cards + self.same_active_cards > 4:  # If you try to burn with too many, fix this later
@@ -324,8 +325,10 @@ class Game:
 				# If we are playing same value as top of the deck, add the number
 				# of cards we have played otherwise set it to number we just played
 				if value == self.pickup_deck.deck[0].value:
+					print('True')
 					self.same_active_cards += len(cards)
 				else:
+					print('False')
 					self.same_active_cards = len(cards)
 
 				# We want to return empty list as we successfully played the cards

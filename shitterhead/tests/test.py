@@ -26,9 +26,9 @@ def print_decks(g):
 
 
 # Test Functions #
-def test_inital_decks(g):
+def test_random_shuffle(g):
 
-	print('\n\n')
+	print('\n')
 	print('# in pickup  :', len(g.pickup_deck))
 	print('# in player0 :', len(g.players[0].in_hand))
 	print('# in discard :', len(g.discard_pile))
@@ -62,7 +62,7 @@ def test_inital_decks(g):
 		print('		', i)
 
 
-def burning_and_reinject(g):
+def test_burn_reinject(g):
 
 	print('\n\n')
 	print('\n..Again playing card 0 (for player 0)..\n')
@@ -77,11 +77,60 @@ def burning_and_reinject(g):
 	print_decks(g)
 
 
+def test_power_cards(g):
+
+	print('\n\n..Changing game states, adding 4 and player 0 turn now..')
+	g.active_card = Card('4', 'Hearts', 'playing')
+	g.current_player = 0
+
+	print('\n\n..Initialise player 0s hand')
+	g.players[0].in_hand = [
+		# Play 5
+		Card('5', 'Hearts', 'playing'),
+		# Play 7 on 7
+		Card('7', 'Hearts', 'playing'),
+		Card('7', 'Hearts', 'playing'),
+		# Burn with four 6
+		Card('6', 'Hearts', 'playing'),
+		Card('6', 'Hearts', 'playing'),
+		Card('6', 'Hearts', 'playing'),
+		Card('6', 'Hearts', 'playing'),
+		# Play 4
+		Card('4', 'Hearts', 'playing'),
+		# Skip and reverse
+		Card('Skip', 'Red', 'uno'),
+		Card('Reverse', 'Red', 'uno'),
+		# Stack Draw 2
+		Card('Draw 2', 'Red', 'uno'),
+		Card('3', 'Hearts', 'playing'),
+		Card('Draw 2', 'Red', 'uno'),
+		# Pickup 4
+	]
+	ascii_version_of_cards(g.players[0].in_hand)
+
+	print('\n\n..Playing 5, 7, 7, 6, 6, 6')
+	for i in range(7):
+		g.players[0].play_cards([0])
+		g.current_player = 0
+		print(g.same_active_cards)
+	print('\n Player 0:')
+	ascii_version_of_cards(g.players[0].in_hand)
+	print('Discard pile:')
+	ascii_version_of_cards(g.discard_pile.deck)
+
+
+
 def main():
 
+	'''
 	g = set_up()
-	test_inital_decks(g)
-	burning_and_reinject(g)
+	test_random_shuffle(g)
+	test_burn_reinject(g)
+	'''
+
+	g = set_up()
+	test_power_cards(g)
+
 
 
 if __name__ == '__main__':
