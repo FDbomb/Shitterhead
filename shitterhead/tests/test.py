@@ -108,16 +108,65 @@ def test_power_cards(g):
 	]
 	ascii_version_of_cards(g.players[0].in_hand)
 
-	print('\n\n..Playing 5, 7, 7, 6, 6, 6')
-	for i in range(7):
-		g.players[0].play_cards([0])
-		g.current_player = 0
-		print(g.same_active_cards)
+	print('\n\n..Playing 5, [7, 7], [6, 6, 6]')
+	g.players[0].play_cards([0])
+	g.current_player = 0
+	g.players[0].play_cards([0, 1])
+	g.current_player = 0
+	g.players[0].play_cards([0, 1, 2])
+	logging.debug('discard_pile:')
+	logging.debug(g.discard_pile.deck)
 	print('\n Player 0:')
 	ascii_version_of_cards(g.players[0].in_hand)
 	print('Discard pile:')
 	ascii_version_of_cards(g.discard_pile.deck)
 
+	print('\n\n..Playing 6 (out of turn), 4')
+	for i in range(2):
+		g.players[0].play_cards([0])
+		g.current_player = 0
+	print('\n Player 0:')
+	ascii_version_of_cards(g.players[0].in_hand)
+	print('Discard pile:')
+	ascii_version_of_cards(g.discard_pile.deck)
+	print('Burned pile:')
+	ascii_version_of_cards(g.burned_pile.deck)
+
+	print('\n\n..Playing Skip and Reverse')
+	for i in range(2):
+		print('Playing:', g.players[0].in_hand[0].value, end=' == ')
+		g.players[0].play_cards([0])
+		print('Current player:', g.current_player)
+		g.current_player = 0
+	print('\n Player 0:')
+	ascii_version_of_cards(g.players[0].in_hand)
+	print('Discard pile:')
+	ascii_version_of_cards(g.discard_pile.deck)
+	print('Burned pile:')
+	ascii_version_of_cards(g.burned_pile.deck)
+
+	print('\n\n..Playing Draw 2, 3, Draw 2')
+	for i in range(3):
+		g.players[0].play_cards([0])
+		g.current_player = 0
+	print('\n Player 0:')
+	ascii_version_of_cards(g.players[0].in_hand)
+	print('Discard pile:')
+	ascii_version_of_cards(g.discard_pile.deck)
+	print('Burned pile:')
+	ascii_version_of_cards(g.burned_pile.deck)
+
+	print('\n\n..Drawing 4 cards')
+	g.players[0].draw_cards(4)
+	print('\n Player 0:')
+	print('In hand')
+	ascii_version_of_cards(g.players[0].in_hand)
+	print('Face down')
+	ascii_version_of_cards(g.players[0].face_down)
+	print('Discard pile:')
+	ascii_version_of_cards(g.discard_pile.deck)
+	print('Burned pile:')
+	ascii_version_of_cards(g.burned_pile.deck)
 
 
 def main():
@@ -130,7 +179,6 @@ def main():
 
 	g = set_up()
 	test_power_cards(g)
-
 
 
 if __name__ == '__main__':

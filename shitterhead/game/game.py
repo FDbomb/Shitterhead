@@ -1,3 +1,4 @@
+import logging
 from random import shuffle
 from collections import deque
 
@@ -10,6 +11,7 @@ FACE_DOWN_CARDS = 3
 FACE_UP_CARDS = 3
 CARDS_DEALT = 15  # NEED TO FIX THIS - CAN BUMP DECK SIZE OR DYNAMICALLY CHANGE THIS
 
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
 CARDS_PER_LINE = 20
 
 
@@ -39,11 +41,11 @@ class Player:
 	def valid_cards(self):
 		# Check if any cards in hand, face up then face down
 		if len(self.in_hand) != 0:
-			return self.in_hand
+			return 'in_hand', self.in_hand
 		elif len(self.face_up) != 0:
-			return self.face_up
+			return 'face_up', self.face_up
 		elif len(self.face_down) != 0:
-			return self.face_down
+			return 'face_down', self.face_down
 		# We should have won at this point
 		else:
 			return []
@@ -58,6 +60,16 @@ class Player:
 		if len(move_return) > 0:
 			for i in index:
 				self.in_hand[i:i] = [move_return[i]]
+
+	def draw_cards(self, no_cards):
+		action = Move('Draw', no_cards)
+		move_return = self.game.do_move(self.id, action)  # do_move will return cards if valid move, otherwise empty
+		self.in_hand.extend(move_return)
+
+	def pickup(self, no_cards):
+		action = Move('Draw', no_cards)
+		move_return = self.game.do_move(self.id, action)  # do_move will return cards if valid move, otherwise empty
+		self.in_hand.extend(move_return)
 
 
 class Deck:
@@ -188,31 +200,38 @@ class Game:
 
 		action = move.action
 		cards = move.cards
-		no_cards = len(cards)
 		is_valid = False
-
-		# Check if we are trying to play more than one card
-		if no_cards > 1:
-			# Need to be same value if playing multiple cards
-			values = [card.value for card in cards]
-			same_cards = len(set(values)) == 1
-			if not same_cards:
-				# Return straight away if not the same cards
-				return action, False
 
 		if player == self.current_player:
 			if action == 'Draw':
 				# If current draw cards, valid to draw
-				if self.active_draw_cards > 0:
+				if cards == self.no_to_draw:
 					is_valid = True
+
 				# Also check if we can play something so draw won't be a valid move
-				for card in self.players[player].valid_cards():
-					action, other_valid = self.is_valid_move(player, Move('Play', card))
-					if other_valid:
-						is_valid = False
-						break
+				playing_from, other_cards = self.players[player].valid_cards()
+
+				if playing_from != 'face_down':
+					for card in other_cards:
+						_, other_valid = self.is_valid_move(player, Move('Play', [card]))
+						if other_valid:
+							is_valid = False
+							break
+				# Insert gambling logic here
+				else:
+					pass
 
 			elif action == 'Play':
+
+				no_cards = len(cards)
+				# Check if we are trying to play more than one card
+				if no_cards > 1:
+					# Need to be same value if playing multiple cards
+					values = [card.value for card in cards]
+					same_cards = len(set(values)) == 1
+					if not same_cards:
+						# Return straight away if not the same cards
+						return action, False
 
 				# Normal gameplay
 				if self.active_draw_card is None:
@@ -220,13 +239,13 @@ class Game:
 					if cards[0] >= self.active_card:
 						is_valid = True
 						# Check for burns
-						print('Yeet', no_cards, self.same_active_cards)
-						if no_cards + self.same_active_cards == 4:
-							action = 'Burn'
+						if cards[0].value == self.active_card.value:
+							if no_cards + self.same_active_cards == 4:
+								action = 'Burn'
+							elif no_cards + self.same_active_cards > 4:  # If you try to burn with too many, fix this later
+								is_valid = False
 						elif cards[0].value == '10':
 							action = 'Burn'
-						elif no_cards + self.same_active_cards > 4:  # If you try to burn with too many, fix this later
-							is_valid = False
 
 				# There is an active draw card
 				else:
@@ -260,8 +279,8 @@ class Game:
 
 				# Otherwise assume we are trying to burn out of turn
 				else:
-					if cards[0] >= self.active_card:
-						if no_cards + self.same_active_cards == 4:
+					if cards[0].value == self.active_card.value:
+						if len(cards) + self.same_active_cards == 4:
 							action = 'Burn'
 							is_valid = True
 
@@ -284,6 +303,15 @@ class Game:
 			# Change key game states
 			elif action == 'Play':
 				value = cards[0].value
+
+				# Want to check how many of the same cards we have played, and correct count
+				# but in case where its an empty deck we look out
+				if len(self.discard_pile.deck) > 0:
+					if value == self.discard_pile.deck[0].value:
+						self.same_active_cards += len(cards)
+					else:
+						self.same_active_cards = len(cards)
+
 				self.discard_pile.add_cards(cards)
 
 				# If we play a 3 we don't want to change anything, it is a pass card
@@ -292,7 +320,7 @@ class Game:
 
 				# Change draw card if playing draw card
 				elif value == 'Draw 2' or value == 'Draw 4':
-					self.active_draw_card == cards[0]
+					self.active_draw_card = cards[0]
 					self.no_to_draw += int(value[-1:])
 
 				# For each skip card, skip one player
@@ -307,11 +335,7 @@ class Game:
 				elif value == 'Reverse':
 					# If we are down to 2 players, treat reverse as skip
 					if self.no_players == 2:
-						for i in cards:
-							if self.reverse is False:
-								self.current_player += 1
-							else:
-								self.current_player -= 1
+						self.current_player += 1  # Only two players so don't care about direction
 					# Otherwise play it as normal
 					else:
 						for i in cards:
@@ -321,22 +345,16 @@ class Game:
 				elif cards[0].type == 'playing':
 					self.active_card = cards[0]
 
-				# Want to check how many of the same cards we have played
-				# If we are playing same value as top of the deck, add the number
-				# of cards we have played otherwise set it to number we just played
-				if value == self.discard_pile.deck[0].value:
-					print('True')
-					self.same_active_cards += len(cards)
-				else:
-					print('False')
-					self.same_active_cards = len(cards)
-
 				# We want to return empty list as we successfully played the cards
 				cards = []
 
 			elif action == 'Burn':
 				self.discard_pile.add_cards(cards)
 				self.discard_pile.burn()
+				self.active_card = Card('4', 'PHANTOM', 'playing')  # Anything can be played on this
+				self.same_active_cards = 0
+				self.active_draw_card = None
+				self.no_to_draw = 0
 
 				# We go back one player, so when we step forward below we will end up back at ourselves
 				if self.reverse is False:
@@ -349,15 +367,15 @@ class Game:
 
 			elif action == 'Pickup':
 				cards = self.pickup_deck.pick_up()
-				self.active_card = Card('4', 'hack', 'playing')  # Set a phantom playing card to play on
+				self.active_card = Card('4', 'PHANTOM', 'playing')  # Set a phantom playing card to play on
 				self.same_active_cards = 0
 
 			# Change current player and current turn
 			self.current_turn += 1
 			if self.reverse is False:
-				self.current_player = (self.current_player + 1) % 4
+				self.current_player = (self.current_player + 1) % self.no_players
 			else:
-				self.current_player = (self.current_player - 1) % 4
+				self.current_player = (self.current_player - 1) % self.no_players
 
 		else:
 			# If we unsuccessfully tried to draw, return nothing

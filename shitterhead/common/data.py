@@ -11,4 +11,4 @@ class Data:
 		self.player_cards = player_cards
 		self.discard_cards = discard_cards
 		self.move = move
-		self.message = message
+		self.message = message  # Use this to say 'invalid move, player wins' etc
