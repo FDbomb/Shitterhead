@@ -1,4 +1,5 @@
-from game.game import *
+from game.card import Card
+from game.game import Game, ascii_version_of_cards
 
 
 # Helper Functions #
@@ -114,8 +115,6 @@ def test_power_cards(g):
 	g.players[0].play_cards([0, 1])
 	g.current_player = 0
 	g.players[0].play_cards([0, 1, 2])
-	logging.debug('discard_pile:')
-	logging.debug(g.discard_pile.deck)
 	print('\n Player 0:')
 	ascii_version_of_cards(g.players[0].in_hand)
 	print('Discard pile:')

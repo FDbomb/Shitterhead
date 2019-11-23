@@ -1,5 +1,10 @@
-from tests import test
+from tests import gameplay, server
 
 
 def run():
-	test.main()
+
+	# Run gameplay tests
+	# gameplay.main()
+
+	# Run server tests
+	server.main()

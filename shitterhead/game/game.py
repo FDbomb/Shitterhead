@@ -189,6 +189,7 @@ class Game:
 		self.current_turn = 0
 		self.current_player = -1
 		self.reverse = False
+		self.winner = False  # Need to periodically update this!!!!!!!!!
 
 		# Current card to play on
 		self.active_card = ''
