@@ -1,5 +1,5 @@
 from common.card import Card
-from game.game import Game, ascii_version_of_cards
+from game.game import Game, Move, ascii_version_of_cards
 
 
 # Helper Functions #
@@ -43,7 +43,7 @@ def test_random_shuffle(g):
 	g.current_player = 0
 
 	print('..Now playing card 0 (for player 0)..')
-	g.players[0].play_cards([0])
+	g.players[0].execute_move(Move('Play', [0]))
 
 	print('\n\nDiscard pile (should be old card 0)')
 	ascii_version_of_cards(g.discard_pile.deck)
@@ -67,7 +67,7 @@ def test_burn_reinject(g):
 
 	print('\n\n')
 	print('\n..Again playing card 0 (for player 0)..\n')
-	g.players[0].play_cards([0])
+	g.players[0].execute_move(Move('Play', [0]))
 
 	print_decks(g)
 
@@ -110,11 +110,11 @@ def test_power_cards(g):
 	ascii_version_of_cards(g.players[0].in_hand)
 
 	print('\n\n..Playing 5, [7, 7], [6, 6, 6]')
-	g.players[0].play_cards([0])
+	g.players[0].execute_move(Move('Play', [0]))
 	g.current_player = 0
-	g.players[0].play_cards([0, 1])
+	g.players[0].execute_move(Move('Play', [0, 1]))
 	g.current_player = 0
-	g.players[0].play_cards([0, 1, 2])
+	g.players[0].execute_move(Move('Play', [0, 1, 2]))
 	print('\n Player 0:')
 	ascii_version_of_cards(g.players[0].in_hand)
 	print('Discard pile:')
@@ -122,7 +122,7 @@ def test_power_cards(g):
 
 	print('\n\n..Playing 6 (out of turn), 4')
 	for i in range(2):
-		g.players[0].play_cards([0])
+		g.players[0].execute_move(Move('Play', [0]))
 		g.current_player = 0
 	print('\n Player 0:')
 	ascii_version_of_cards(g.players[0].in_hand)
@@ -134,7 +134,7 @@ def test_power_cards(g):
 	print('\n\n..Playing Skip and Reverse')
 	for i in range(2):
 		print('Playing:', g.players[0].in_hand[0].value, end=' == ')
-		g.players[0].play_cards([0])
+		g.players[0].execute_move(Move('Play', [0]))
 		print('Current player:', g.current_player)
 		g.current_player = 0
 	print('\n Player 0:')
@@ -146,7 +146,7 @@ def test_power_cards(g):
 
 	print('\n\n..Playing Draw 2, 3, Draw 2')
 	for i in range(3):
-		g.players[0].play_cards([0])
+		g.players[0].execute_move(Move('Play', [0]))
 		g.current_player = 0
 	print('\n Player 0:')
 	ascii_version_of_cards(g.players[0].in_hand)
@@ -156,7 +156,7 @@ def test_power_cards(g):
 	ascii_version_of_cards(g.burned_pile.deck)
 
 	print('\n\n..Drawing 4 cards')
-	g.players[0].draw_cards(4)
+	g.players[0].execute_move(Move('Draw', 4))
 	print('\n Player 0:')
 	print('In hand')
 	ascii_version_of_cards(g.players[0].in_hand)

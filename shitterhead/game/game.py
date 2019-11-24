@@ -1,4 +1,4 @@
-import logging
+import logging as log
 from random import shuffle
 from collections import deque
 
@@ -11,7 +11,7 @@ FACE_DOWN_CARDS = 3
 FACE_UP_CARDS = 3
 CARDS_DEALT = 15  # NEED TO FIX THIS - CAN BUMP DECK SIZE OR DYNAMICALLY CHANGE THIS
 
-logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%H:%M:%S', level=logging.DEBUG)
+log.basicConfig(format='%(asctime)s - %(filename)s - %(threadName)s - %(message)s', datefmt='%H:%M:%S', level=log.DEBUG)
 CARDS_PER_LINE = 20
 
 
@@ -28,14 +28,8 @@ class Player:
 	def __str__(self):
 		return 'Player ' + str(self.id)
 
-	def pickle_into_data(self):
-		pass
-
-	def unpickle_update_player(self):
-		# if move is play card
-		# then self.play
-		# if move is pickup, then self.pickup
-		pass
+	def list_hands(self):
+		return [self.in_hand, self.face_up, self.face_down]
 
 	# Returns the cards that are valid for the player to draw from
 	def valid_cards(self):
@@ -48,30 +42,30 @@ class Player:
 			return 'face_down', self.face_down
 		# We should have won at this point
 		else:
-			return []
+			return [], None
+
+	def execute_move(self, move):
+		if move.action == 'Play':
+			self.play_cards(move.cards)
+		else:
+			self.draw_cards(move)  # Handles Draw and Pickup case
 
 	def play_cards(self, index):  # make index an array to play multiple cards
 		cards = [self.in_hand.pop(i) for i in sorted(index, reverse=True)]  # Pop indexed cards, need to pop in reverse over to preserve index
-		action = Move('Play', cards)
-		is_valid, move_return = self.game.do_move(self.id, action)  # do_move will return the card if not valid move, otherwise empty
+		move = Move('Play', cards)
+		is_valid, move_return = self.game.do_move(self.id, move)  # do_move will return the card if not valid move, otherwise empty
 
 		# Need to make this return card to same position it was played out of,
 		# perhaps if unsuccessful, don't send any card data just say it failed sorry fam
 		if len(move_return) > 0:
-			for i in index:
-				self.in_hand[i:i] = [move_return[i]]
+
+			for i, ind in enumerate(index):
+				self.in_hand[ind:ind] = [move_return[i]]
 
 		return is_valid
 
-	def draw_cards(self, no_cards):
-		action = Move('Draw', no_cards)
-		is_valid, move_return = self.game.do_move(self.id, action)  # do_move will return cards if valid move, otherwise empty
-		self.in_hand.extend(move_return)
-		return is_valid
-
-	def pickup(self):
-		action = Move('Pickup')
-		is_valid, move_return = self.game.do_move(self.id, action)  # do_move will return cards if valid move, otherwise empty
+	def draw_cards(self, move):  # Also handles identical Pickup case
+		is_valid, move_return = self.game.do_move(self.id, move)  # do_move will return cards if valid move, otherwise empty
 		self.in_hand.extend(move_return)
 		return is_valid
 
@@ -149,17 +143,28 @@ class DiscardPile(Deck):
 	def __init__(self, game):
 		Deck.__init__(self, game)
 
-	def four_of_a_kind(self):
-		return
-
 	def burn(self):
 		self.game.burned_pile.add_cards(self.deck)
 		self.deck = deque()
 
-	def pick_up(self, player_id):
+	def pick_up(self):
 		temp = self.deck
 		self.deck = Deck()
 		return list(temp)
+
+	def top_playable(self):
+		active = self.game.active_card
+		num_cards = min(5, len(self.deck))  # Chose as many cards as we can up to 5
+		top = list(self.deck)[:num_cards]  # Not very efficient :'(
+
+		if active == '':  # Try to fix this, annoying to check it each time when it will only happen once per game
+			return []
+		elif active.suit == 'PHANTOM':
+			return top
+		elif active in top:
+			return top
+		elif num_cards != 0:
+			return top.append(active)
 
 
 class BurnedPile(Deck):
@@ -201,6 +206,17 @@ class Game:
 		self.active_draw_card = None  # None, draw 2 card, draw 4 card
 		self.no_to_draw = 0  # Number of cards to draw
 
+	def remove_player(self, player_id):
+		self.no_players -= 1
+		del self.players[player_id]
+
+		# If we remove a player, we lower all player numbers higher than the deleted player
+		# This allows all the next player logic to continue without issue
+		# Could also keep two lists of players, those active and those not
+		for player in self.players:
+			if player.id > player_id:
+				player.id -= 1
+
 	def is_valid_move(self, player, move):
 
 		action = move.action
@@ -213,9 +229,10 @@ class Game:
 				if cards == self.no_to_draw:
 					is_valid = True
 
-				# Also check if we can play something so draw won't be a valid move
+				# Also check that we cannot play anything else so draw won't be a valid move
 				playing_from, other_cards = self.players[player].valid_cards()
 
+				# Deal with playing from facedown as a legit move
 				if playing_from != 'face_down':
 					for card in other_cards:
 						_, other_valid = self.is_valid_move(player, Move('Play', [card]))
@@ -279,6 +296,7 @@ class Game:
 					# If we are here we know both cards have same value so just take first card
 					if cards[0].value == 4:
 						# TO DO: EXPAND THIS IF NO 4s (pretty rare I think)
+						# MAKE PEOPLE PICK UP IN ORDER TILL SOMEONE HAS A 4 to play
 						# P(No 4s) = C(124/HAND SIZE * NO PLAYERS) / C(132/HAND SIZE * NO PLAYERS) = 0.6%
 						is_valid = True
 
@@ -371,7 +389,7 @@ class Game:
 				cards = []
 
 			elif action == 'Pickup':
-				cards = self.pickup_deck.pick_up()
+				cards = self.discard_pile.pick_up()
 				self.active_card = Card('4', 'PHANTOM', 'playing')  # Set a phantom playing card to play on
 				self.same_active_cards = 0
 
