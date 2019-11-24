@@ -4,6 +4,8 @@ import socket
 from time import sleep
 
 from game.game import Game
+from common.data import Move, Data
+
 
 # CONSTANTS #
 HOST = '192.168.0.5'
@@ -13,6 +15,7 @@ PLAYERS = 4
 
 class Client:
 	game = None
+
 	def __init__(self, conn, player_id):
 		self.id = player_id
 		self.conn = conn
@@ -29,8 +32,12 @@ class Client:
 
 def threaded_client(self):
 	while True:
-		log.info(f'Incoming yoot from {self.id}') # noqa
-		log.info(self.receive(44).decode())
+
+		log.info(f'Listening for incoming header from {self.id}') # noqa
+		package_size = self.receive(4).decode()
+		log.info(f'Trying to receive package of size {package_size}b')
+		package = self.receive(int(package_size)).decode()
+		print('Got package:', package)
 		log.info(f'Sending a yeet back to {self.id}')
 		self.send(b'Yeet from server')
 
@@ -40,12 +47,12 @@ def threaded_client(self):
 
 def main():
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		clients = []  # Should this be here? Maybe one loop up?
+		clients = []  # How to get rid of this, very useless
 		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 		with concurrent.futures.ThreadPoolExecutor(max_workers=PLAYERS) as executor:
 
-			log.info('Starting Game')
+			log.info('Starting Game...')
 			Client.game = Game(PLAYERS)
 
 			# Try to start the server
@@ -63,21 +70,14 @@ def main():
 			player_id = 0
 			while player_id <= PLAYERS - 1:
 				conn, addr = s.accept()
+				log.info(f'{addr} connected as player {player_id}')
 
 				client = Client(conn, player_id)
 				client.send(f'{player_id}'.encode())  # Send player id to new connection
 				executor.submit(threaded_client, client)
 				clients.append(client)
 
-				log.info(f'{addr} connected as player {player_id}')
+				
 				player_id += 1
 
-			'''
-			for i in range(PLAYERS):
-				executor.submit(threaded_client, clients[i])
-			'''
-
-			while not g.winner:
-				pass
-
-			log.info('Shutting down')
+			log.info('All clients connected...')

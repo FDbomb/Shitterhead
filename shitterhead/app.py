@@ -4,7 +4,7 @@ from tests import gameplay, server
 def run():
 
 	# Run gameplay tests
-	# gameplay.main()
+	gameplay.main()
 
 	# Run server tests
 	server.main()

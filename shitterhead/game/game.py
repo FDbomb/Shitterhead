@@ -2,8 +2,8 @@ import logging
 from random import shuffle
 from collections import deque
 
-from game.card import Card
-from common.data import Move, Data
+from common.card import Card
+from common.data import Move
 # from game.data import Data  # Will be used for network data
 
 # CONTSTANTS #
@@ -53,7 +53,7 @@ class Player:
 	def play_cards(self, index):  # make index an array to play multiple cards
 		cards = [self.in_hand.pop(i) for i in sorted(index, reverse=True)]  # Pop indexed cards, need to pop in reverse over to preserve index
 		action = Move('Play', cards)
-		move_return = self.game.do_move(self.id, action)  # do_move will return the card if not valid move, otherwise empty
+		is_valid, move_return = self.game.do_move(self.id, action)  # do_move will return the card if not valid move, otherwise empty
 
 		# Need to make this return card to same position it was played out of,
 		# perhaps if unsuccessful, don't send any card data just say it failed sorry fam
@@ -61,15 +61,19 @@ class Player:
 			for i in index:
 				self.in_hand[i:i] = [move_return[i]]
 
+		return is_valid
+
 	def draw_cards(self, no_cards):
 		action = Move('Draw', no_cards)
-		move_return = self.game.do_move(self.id, action)  # do_move will return cards if valid move, otherwise empty
+		is_valid, move_return = self.game.do_move(self.id, action)  # do_move will return cards if valid move, otherwise empty
 		self.in_hand.extend(move_return)
+		return is_valid
 
-	def pickup(self, no_cards):
-		action = Move('Draw', no_cards)
-		move_return = self.game.do_move(self.id, action)  # do_move will return cards if valid move, otherwise empty
+	def pickup(self):
+		action = Move('Pickup')
+		is_valid, move_return = self.game.do_move(self.id, action)  # do_move will return cards if valid move, otherwise empty
 		self.in_hand.extend(move_return)
+		return is_valid
 
 
 class Deck:
@@ -383,7 +387,7 @@ class Game:
 			if action == 'Draw':
 				cards = []
 
-		return cards
+		return is_valid, cards
 
 
 # From https://codereview.stackexchange.com/questions/82103/ascii-fication-of-playing-cards

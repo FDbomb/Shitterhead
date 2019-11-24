@@ -1,4 +1,4 @@
-from game.card import Card
+from common.card import Card
 from game.game import Game, ascii_version_of_cards
 
 
