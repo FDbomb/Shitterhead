@@ -2,7 +2,7 @@ import json
 import pickle
 
 
-# Used in Game and in Date
+# Used in Game, Date, and sent from client to server
 class Move:
 	def __init__(self, action=None, cards=[]):
 		self.action = action  # Draw, Play, Burn (set by is_valid_move), Pickup (should check no other card is valid), End (set by game)
@@ -14,7 +14,7 @@ class Move:
 		return header + body
 
 
-# Sent between client and server
+# Sent from server to client
 class Data:
 	def __init__(self, player_cards=None, discard_cards=None, message=None):
 		self.player_cards = player_cards

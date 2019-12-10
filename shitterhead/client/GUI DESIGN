@@ -1,0 +1,24 @@
+							Shitterhead
+
+		     ┌──┐ ┌──┐ ┌──┐		
+   Josh: 12  │10│ │10│ │10│ 
+		     └──┘ └──┘ └──┘
+		     ┌──┐ ┌──┐ ┌──┐		
+  	You: 12  │10│ │10│ │10│
+		     └──┘ └──┘ └──┘
+		     ┌──┐ ┌──┐ ┌──┐		
+    Mel: 12  │10│ │10│ │10│
+		     └──┘ └──┘ └──┘
+		     ┌──┐ ┌──┐ ┌──┐		
+^ James: 12  │10│ │10│ │10│
+		     └──┘ └──┘ └──┘
+
+
+     			  PICKUP DECK CURRENT CARDS, IN FAN SHAPE
+
+
+     			  											Play 	-> Card indicies (1 6) + Enter
+     			  			Your active cards 				Draw 	-> D + Enter
+     			  			[1] [2] [3] [4] [5]				Pickup 	-> P + Enter
+
+: 5 6

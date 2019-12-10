@@ -10,9 +10,9 @@ from common.data import Move
 FACE_DOWN_CARDS = 3
 FACE_UP_CARDS = 3
 CARDS_DEALT = 15  # NEED TO FIX THIS - CAN BUMP DECK SIZE OR DYNAMICALLY CHANGE THIS
+CARDS_PER_LINE = 20
 
 log.basicConfig(format='%(asctime)s - %(filename)s - %(threadName)s - %(message)s', datefmt='%H:%M:%S', level=log.DEBUG)
-CARDS_PER_LINE = 20
 
 
 # CLASSES #

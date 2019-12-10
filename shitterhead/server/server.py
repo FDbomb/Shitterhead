@@ -8,7 +8,7 @@ from common.data import Move, Data
 
 
 # CONSTANTS #
-HOST = '192.168.0.7'
+HOST = '192.168.0.5'
 PORT = 5555
 PLAYERS = 4
 
