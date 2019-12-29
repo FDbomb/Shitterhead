@@ -1,8 +1,8 @@
 class Card:
 	mapping = {'4': 0, '5': 1, '6': 2, '7': 3, '8': 4, '9': 5, 'Jack': 6, 'Queen': 7, 'King': 8, 'Ace': 9}
 
-	def __init__(self, val, suit, kind):
-		self.value = val
+	def __init__(self, value, suit, kind):
+		self.value = value
 		self.suit = suit  # includes colour for UNO cards
 		self.type = kind  # uno or playing
 

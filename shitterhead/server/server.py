@@ -8,7 +8,7 @@ from common.data import Move, Data
 
 
 # CONSTANTS #
-HOST = '192.168.0.5'
+HOST = '192.168.0.12'
 PORT = 5555
 PLAYERS = 4
 
@@ -17,6 +17,7 @@ class Client:
 	game = None
 	clients = []
 
+	# self.player points directly to the player object in the game associated with this client instance
 	def __init__(self, conn, player_id):
 		self.id = player_id
 		self.player = Client.game.players[self.id]
@@ -38,7 +39,7 @@ class Client:
 	# Use this to listen long-term for incoming moves, makes use of custom package format
 	def listen_for_moves(self):
 		log.info(f'Listening for incoming header from {self.id}')
-		header = self.recv(3)
+		header = self.recv(3)  # Header always 3 bytes long
 		package_size = int(header)
 
 		log.info(f'Trying to receive package of size {str(package_size)} bytes')
@@ -47,14 +48,34 @@ class Client:
 
 		return json.loads(package)
 
+	# Will send entire package
 	def send(self, data):
 		self.conn.sendall(data)
 
+	# Send all relevant data to all connected clients
 	def send_to_all(self, message=''):
 		discard_cards = Client.game.discard_pile.top_playable()
+		players_overview = Client.game.players_overview()
+		active_players = (Client.game.current_player, Client.game.reverse)
+		try:
+			pickup_type = Client.game.active_card.type
+		except:
+			pickup_type = 'uno'
+			# This will be fixed don't worry!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		active_draw = Client.game.no_to_draw
+
 		for client in Client.clients:
-			player_cards = client.player.list_hands()
-			data = Data(player_cards, discard_cards, message)
+			_, player_cards = client.player.valid_cards()  # Returns current playable cards for particular player
+
+			data = Data(
+				players_overview,
+				active_players,
+				pickup_type,
+				player_cards,
+				discard_cards,
+				active_draw,
+				message
+			)
 			client.send(data.encode())
 
 	def thread(self):
@@ -72,7 +93,10 @@ class Client:
 			self.player.execute_move(move)
 
 			log.info(f'Sending a yeet out {self.id}')
-			self.send_to_all(f'Yeet from server courtesy of {self.id}')
+			try:
+				self.send_to_all(f'Yeet from server courtesy of {self.id}')
+			except Exception as e:
+				print(e)
 
 		if Client.game.current_turn != 0:
 			# If we have got to this point we have no cards or disconnected from server mid game and

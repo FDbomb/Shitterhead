@@ -1,5 +1,6 @@
 import logging as log
 import socket
+from time import sleep
 
 log.basicConfig(format='%(asctime)s - %(filename)s - %(threadName)s - %(message)s', datefmt='%H:%M:%S', level=log.INFO)
 
@@ -12,14 +13,22 @@ class Socket:
 		self.connected = False
 
 	def connect(self, server):
-		self.host = '192.168.0.5'  # server
+		self.host = '192.168.0.12'  # server
 		self.port = 5555
 
-		self.sock.connect((self.host, self.port))
-		self.connected = True
+		con_attempts = 0
+		while self.connected is False and con_attempts < 60:
+			try:
+				self.sock.connect((self.host, self.port))
+				self.connected = True
 
-		self.id = self.recv(1)  # Can hang here, need to fix this but close to zero chance of that happening
-		print(f' Connected as player {self.id}')
+				self.id = self.recv(1)  # Can hang here, need to fix this but close to zero chance of that happening
+				print(f' Connected as player {self.id}')
+
+			except (ConnectionRefusedError, OSError):
+				con_attempts = 1
+				sleep(1)
+				print(' Trying again')
 
 	def send(self, msg):
 		self.sock.sendall(msg)

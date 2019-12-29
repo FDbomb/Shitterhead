@@ -28,8 +28,13 @@ class Player:
 	def __str__(self):
 		return 'Player ' + str(self.id)
 
+	# Turn a list of cards into a list of card types, use to hide facedown cards
+	def obfuscate_cards(self, cards):
+		return [card.type for card in cards]
+
 	def list_hands(self):
-		return [self.in_hand, self.face_up, self.face_down]
+		# List the hands to send over server, dont want client to know the facedown cards, just their type
+		return [len(self.in_hand), self.face_up, self.obfuscate_cards(self.face_down)]
 
 	# Returns the cards that are valid for the player to draw from
 	def valid_cards(self):
@@ -157,13 +162,12 @@ class DiscardPile(Deck):
 		num_cards = min(5, len(self.deck))  # Chose as many cards as we can up to 5
 		top = list(self.deck)[:num_cards]  # Not very efficient :'(
 
+		# We require the active card to be last, if nothing active append ''
 		if active == '':  # Try to fix this, annoying to check it each time when it will only happen once per game
-			return []
+			return ['']
 		elif active.suit == 'PHANTOM':
-			return top
-		elif active in top:
-			return top
-		elif num_cards != 0:
+			return top.append('')
+		else:
 			return top.append(active)
 
 
@@ -216,6 +220,11 @@ class Game:
 		for player in self.players:
 			if player.id > player_id:
 				player.id -= 1
+
+	def players_overview(self):
+		overview = {}
+		for player in self.players:
+			overview[player.id] = player.list_hands()
 
 	def is_valid_move(self, player, move):
 
@@ -293,12 +302,16 @@ class Game:
 
 				# Deal with the case when we are playing the first card
 				if self.active_card == '':
-					# If we are here we know both cards have same value so just take first card
-					if cards[0].value == 4:
-						# TO DO: EXPAND THIS IF NO 4s (pretty rare I think)
-						# MAKE PEOPLE PICK UP IN ORDER TILL SOMEONE HAS A 4 to play
-						# P(No 4s) = C(124/HAND SIZE * NO PLAYERS) / C(132/HAND SIZE * NO PLAYERS) = 0.6%
-						is_valid = True
+
+					if len(cards) > 1:
+						# Need to be same value if playing multiple cards
+						values = [card.value for card in cards]
+						same_cards = set(values) == set([4])  # Check we are playing a 4
+						if same_cards:
+							# TO DO: EXPAND THIS IF NO 4s (pretty rare I think)
+							# MAKE PEOPLE PICK UP IN ORDER TILL SOMEONE HAS A 4 to play
+							# P(No 4s) = C(124/HAND SIZE * NO PLAYERS) / C(132/HAND SIZE * NO PLAYERS) = 0.6%
+							is_valid = True
 
 				# Otherwise assume we are trying to burn out of turn
 				else:

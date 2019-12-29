@@ -17,10 +17,13 @@ class Client:
 
 		self.name, server = self.gui.welcome()
 
-		while self.socket.connected is False:
-			self.socket.connect(server)
+		# Try to connect, if no connection after 1 min we exit with an error message
+		self.socket.connect(server)
 
-		self.gui.connected()
+		if self.socket.connected is True:
+			self.gui.connected()
+		else:
+			self.gui.conn_failed()
 
 	def socket_thread(self):
 		while True:
@@ -45,9 +48,9 @@ class Client:
 	def main_thread(self):
 
 		with concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix='Recv Thread') as executor:
-			recv_thread = executor.submit(self.socket_thread)
+			sock_thread = executor.submit(self.socket_thread)
 
-			while recv_thread.running():
+			while sock_thread.running():
 				self.gui_thread()
 
 		self.socket.send(''.encode())  # Properly close the socket here
