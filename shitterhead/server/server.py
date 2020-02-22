@@ -3,7 +3,7 @@
 # FDbomb
 #
 # to do
-# - fix send_to_all -> pickup type for phantom/uno cards
+# - add in command to place face up cards
 
 import concurrent.futures
 import json
@@ -64,11 +64,7 @@ class Client:
 		discard_cards = Client.game.discard_pile.top_playable()
 		players_overview = Client.game.players_overview()
 		active_players = (Client.game.current_player, Client.game.reverse)
-		try:
-			pickup_type = Client.game.pickup_deck.type
-		except:
-			pickup_type = 'uno'
-			# This will be fixed don't worry!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		pickup_type = Client.game.pickup_deck.deck[0].type
 		active_draw = Client.game.no_to_draw
 
 		for client in clients:

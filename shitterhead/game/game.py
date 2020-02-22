@@ -30,18 +30,38 @@ class Player:
 		self.face_up = []
 		self.in_hand = []
 
+		self.picked_up = False  # flag once player has drawn or picked up to block changing faceup cards
+
 	def __str__(self):
 		return 'Player ' + str(self.id)
 
-	# Turn a list of cards into a list of card types, use to hide facedown cards
+	# takes list of card index from player hand and places them face up
+	# note, if a player has less than 6 cards and wishes to change it is impossible
+	def addToFacedown(self, cards):
+
+		# accept only if 3 cards are chosen
+		if len(cards) == 3 and self.picked_up is False:
+
+			self.in_hand.extend(self.face_up)  # first clear face up cards
+			self.face_up = []
+
+			for card in sorted(cards, reverse=True):  # move them in reverse to not change index
+				temp = self.in_hand.pop(card)
+				self.face_up.append(temp)
+
+			return True
+		else:
+			return False
+
+	# turn a list of cards into a list of card types, use to hide facedown cards
 	def obfuscate_cards(self, cards):
 		return [card.type for card in cards]
 
+	# list the hands to send over server, dont want client to know the facedown cards, just their type
 	def list_hands(self):
-		# List the hands to send over server, dont want client to know the facedown cards, just their type
 		return [len(self.in_hand), self.face_up, self.obfuscate_cards(self.face_down)]
 
-	# Returns the cards that are valid for the player to draw from
+	# returns the cards that are valid for the player to draw from
 	def valid_cards(self):
 		# Check if any cards in hand, face up then face down
 		if len(self.in_hand) != 0:
@@ -60,6 +80,11 @@ class Player:
 			is_valid = self.play_cards(move.cards)
 		elif move.action is None:
 			is_valid = False  # break early to save some computation, will break for play most cases anyway
+		elif move.action == 'Facedown':  # if we are trying to put cards facedown
+			try:
+				is_valid = self.addToFacedown(move.cards)
+			except Exception as e:
+				print(e)
 		else:
 			is_valid = self.draw_cards(move)  # handles Draw and Pickup case
 
@@ -383,6 +408,7 @@ class Game:
 				cards = self.pickup_deck.give_top_cards(cards)
 				self.active_draw_card = None
 				self.no_to_draw = 0
+				self.players[player].picked_up = True
 
 			# Change key game states
 			elif action == 'Play':
@@ -463,6 +489,7 @@ class Game:
 				cards = self.discard_pile.pick_up()
 				self.active_card = Card('4', 'PHANTOM', 'playing')  # Set a phantom playing card to play on
 				self.same_active_cards = 0
+				self.players[player].picked_up = True
 
 			# Change current player and current turn
 			self.current_turn += 1

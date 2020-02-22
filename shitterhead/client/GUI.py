@@ -151,8 +151,8 @@ class GUI:
 	def showPlayersOverview(self, name, data, current):
 		# most of this is defined in the data.py file
 		no_cards = data[0]
-		face_up = [card.value for card in data[1]]
-		face_down = data[2]
+		face_up = [card.value for card in data[1]]  # list of values as strings
+		face_down = data[2]  # list of types (uno or playing) as strings
 
 		# 4 lines per player, name on 1st line and card for next 3 lines
 		lines = [[] for _ in range(4)]
@@ -165,12 +165,12 @@ class GUI:
 			i = 0
 			# we print all face up and half fd cards to match
 			while i < len(face_up):
-				lines = self.smallFU(lines, face_up[i].value)
-				lines = self.smallHalfFD(lines, face_down[i].type)
+				lines = self.smallFU(lines, face_up[i])
+				lines = self.smallHalfFD(lines, face_down[i])
 				i += 1
 			# if we run out of face up cards, we print the remaining fd cards
 			while i < 3:
-				lines = self.smallFD(lines, face_down[i].type)
+				lines = self.smallFD(lines, face_down[i])
 				i += 1
 		# if no face up cards, we just print all available facedown cards
 		else:
@@ -257,8 +257,11 @@ class GUI:
 			else:
 				status = '  '
 
-			# print the little overview for each player
-			print(self.showPlayersOverview(player, data, status) + '\n')
+			try:
+				# print the little overview for each player
+				print(self.showPlayersOverview(player, data, status) + '\n')
+			except Exception as e:
+				print(e)
 
 		# print active playing cards
 		try:

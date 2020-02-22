@@ -13,7 +13,7 @@ import pickle
 # Used in Game, Date, and sent from client to server
 class Move:
 	def __init__(self, action=None, cards=[]):
-		self.action = action  # Draw, Play, Burn (set by is_valid_move), Pickup (should check no other card is valid), End (set by game)
+		self.action = action  # Draw, Play, Burn (set by is_valid_move), Pickup (should check no other card is valid), End (set by game), Facedown
 		self.cards = cards
 
 	def encode(self):
