@@ -32,3 +32,24 @@
 			'move': move,
 			'message': message
 		}
+
+
+
+# from game.py, checking out of turn burn
+
+# Otherwise assume we are trying to burn out of turn
+				else:
+					num_cards = len(cards)  # get number of cards we are playing
+					values = [card.value for card in cards]  # make list of our playing card values
+
+					# extend values list with top cards on the discard pile
+					values.extend([self.discard_piles[i].value for i in [0, (4 - num_cards)]])
+
+					# convert to a set, removes duplicates so if len 1 then all the same values
+					same_cards = (len(set(values) == 1))
+					
+					# TO DO: fix the above logic as you can currently burn a 5 card burn with this logic :(
+					if same_cards is True:
+						log.info('out of turn burnnnnnnn')
+						action = 'Burn'
+						is_valid = True

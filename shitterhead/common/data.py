@@ -1,3 +1,11 @@
+# data.py
+# defines data structures used to send data between client and server
+# FDbomb
+#
+# to do
+# - only send data as needed, if player facedown doesn't change dont waste bandwidth
+
+
 import json
 import pickle
 
@@ -33,9 +41,10 @@ class Data:
 		header = str(len(body)).zfill(4).encode()
 		return header + body
 
+
 '''
 players_overview = {
-	0: [no cards, [face_up], [face_down_type]], 
+	0: [no cards, [face_up], [face_down_type]],
 	1: [no cards, [face_up], [face_down_type]]
 }
 active_players = (current player, reverse=True/False)
@@ -46,7 +55,3 @@ pickup_type = uno or playing
 discard_cards = top 5 cards + last card is the active card
 active_draw = number of cards to pickup
 '''
-
-## TO DO ##
-#
-# Make this only update fields as needed, if player facedown doesn't change dont waste bandwidth

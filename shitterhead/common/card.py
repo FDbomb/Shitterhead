@@ -1,5 +1,5 @@
 class Card:
-	mapping = {'4': 0, '5': 1, '6': 2, '7': 3, '8': 4, '9': 5, 'Jack': 6, 'Queen': 7, 'King': 8, 'Ace': 9}
+	mapping = {'2': 0, '4': 1, '5': 2, '6': 3, '7': 4, '8': 5, '9': 6, 'Jack': 7, 'Queen': 8, 'King': 9, 'Ace': 10}
 
 	def __init__(self, value, suit, kind):
 		self.value = value

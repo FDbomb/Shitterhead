@@ -1,3 +1,10 @@
+# server.py
+# main script that runs on the server side, handles clients and game
+# FDbomb
+#
+# to do
+# - fix send_to_all -> pickup type for phantom/uno cards
+
 import concurrent.futures
 import json
 import logging as log
@@ -8,7 +15,7 @@ from common.data import Move, Data
 
 
 # CONSTANTS #
-HOST = '192.168.0.12'
+HOST = '192.168.0.5'
 PORT = 5555
 PLAYERS = 4
 
@@ -53,61 +60,69 @@ class Client:
 		self.conn.sendall(data)
 
 	# Send all relevant data to all connected clients
-	def send_to_all(self, message=''):
+	def sendTo(self, clients, message=''):
 		discard_cards = Client.game.discard_pile.top_playable()
 		players_overview = Client.game.players_overview()
 		active_players = (Client.game.current_player, Client.game.reverse)
 		try:
-			pickup_type = Client.game.active_card.type
+			pickup_type = Client.game.pickup_deck.type
 		except:
 			pickup_type = 'uno'
 			# This will be fixed don't worry!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 		active_draw = Client.game.no_to_draw
 
-		for client in Client.clients:
+		for client in clients:
 			_, player_cards = client.player.valid_cards()  # Returns current playable cards for particular player
 
 			data = Data(
 				players_overview,
 				active_players,
-				pickup_type,
 				player_cards,
+				pickup_type,
 				discard_cards,
 				active_draw,
 				message
 			)
+
 			client.send(data.encode())
+
+		log.debug(f'pickup_type: {pickup_type}\n   discard_cards: {discard_cards}\n   active_draw: {active_draw}')
 
 	def thread(self):
 		while self.player.valid_cards() != ([], None):
 			try:
 				package = self.listen_for_moves()
-			except BufferError:  # Except network error, want to shut down thread/connection
+			except BufferError:  # except network error, want to shut down thread/connection
 				log.warning(f'Player {self.id} disconnected')
-				# Client has disconnected so stop trying to send data
+				# client has disconnected so stop trying to send data
 				Client.clients = [client for client in Client.clients if client.id != self.id]
 				break
 
 			log.info('Handling package')
 			move = Move(**package)
-			self.player.execute_move(move)
+			was_valid = self.player.execute_move(move)
 
-			log.info(f'Sending a yeet out {self.id}')
 			try:
-				self.send_to_all(f'Yeet from server courtesy of {self.id}')
+				if was_valid is True:
+					log.info('Sending package to all')
+					self.sendTo(Client.clients, f'Yeet from server courtesy of {self.id}')
+				else:
+					log.info(f'Sending package to {self.id}')
+					# need to wrap self in a list here as we try to iterate over it
+					self.sendTo([self], f'Yeet from server courtesy of {self.id}')
 			except Exception as e:
 				print(e)
 
 		if Client.game.current_turn != 0:
-			# If we have got to this point we have no cards or disconnected from server mid game and
+			# if we have got to this point we have no cards or disconnected from server mid game and
 			# so we should be removed from the game
 			Client.game.remove_player(self.id)
 
-			# If we remove a client, we sync client.id with player id
+			# if we remove a client, we sync client.id with player id
 			for client in Client.clients:
 				client.id = client.player.id
 
-			# Allow player to spectate the rest of the game
+			# allow player to spectate the rest of the game
 			while Client.game.winner is False:
 				try:
 					# send updates
@@ -120,8 +135,8 @@ class Client:
 					client.id -= 1
 					client.player = Client.game.players[client.id]
 
-		self.id = 99  # Do this so we can easily identify the current client so we can close it
-		self.close()  # Remove client and close thread
+		self.id = 99  # do this so we can easily identify the current client so we can close it
+		self.close()  # remove client and close thread
 
 	def close(self):
 		Client.clients = [client for client in Client.clients if client.id != self.id]
@@ -137,18 +152,18 @@ def main():
 			log.info('Starting Game...')
 			Client.game = Game(PLAYERS)
 
-			# Try to start the server
+			# try to start the server
 			try:
 				s.bind((HOST, PORT))
 			except socket.error as e:
 				print(str(e))
 				exit()
 
-			# Listen for connections
+			# listen for connections
 			s.listen()
 			log.info("Server running, waiting for connection...")
 
-			# Connect players
+			# connect players
 			while len(Client.clients) <= Client.game.no_players - 1:
 				conn, addr = s.accept()
 				player_id = len(Client.clients)
@@ -156,7 +171,7 @@ def main():
 				log.info(f'Num of game players: {Client.game.no_players - 1}')
 
 				client = Client(conn, player_id)
-				client.send(f'{player_id}'.encode())  # Send player id to new connection
+				client.send(f'{player_id}'.encode())  # send player id to new connection
 				Client.clients.append(client)
 				executor.submit(client.thread)
 

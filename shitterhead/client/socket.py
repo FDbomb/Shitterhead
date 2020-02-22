@@ -2,8 +2,6 @@ import logging as log
 import socket
 from time import sleep
 
-log.basicConfig(format='%(asctime)s - %(filename)s - %(threadName)s - %(message)s', datefmt='%H:%M:%S', level=log.INFO)
-
 
 # https://stackoverflow.com/questions/17963485/python-socket-connection-class
 class Socket:
@@ -13,7 +11,7 @@ class Socket:
 		self.connected = False
 
 	def connect(self, server):
-		self.host = '192.168.0.12'  # server
+		self.host = '192.168.0.5'  # server
 		self.port = 5555
 
 		con_attempts = 0
@@ -45,7 +43,7 @@ class Socket:
 
 		return recv
 
-	def pkl_recv(self, size):
+	def recvPkl(self, size):
 		recv = b''
 		while len(recv) < size:
 			temp_recv = self.sock.recv(size - len(recv))
@@ -57,13 +55,13 @@ class Socket:
 
 		return recv
 
-	def listen_for_data(self):
+	def listenForData(self):
 		log.debug(f'Listening for incoming header from server')
 		header = self.recv(4)
 		package_size = int(header)
 
 		log.debug(f'Trying to receive package of size {str(package_size)} bytes')
-		package = self.pkl_recv(package_size)
+		package = self.recvPkl(package_size)
 		log.debug(f'Got all {len(package)} bytes')
 
 		return package
