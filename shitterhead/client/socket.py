@@ -11,7 +11,7 @@ class Socket:
 		self.connected = False
 
 	def connect(self, server):
-		self.host = '192.168.43.169'  # CHANGE THIS TO SERVER ADDRESS!!!!
+		self.host = '127.0.0.1'  # CHANGE THIS TO SERVER ADDRESS!!!!
 		self.port = 5555
 
 		con_attempts = 0
