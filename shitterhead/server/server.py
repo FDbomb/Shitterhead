@@ -15,7 +15,7 @@ from common.data import Move, Data
 
 
 # CONSTANTS #
-HOST = '192.168.0.5'
+HOST = '192.168.43.169'  # SET THIS TO YOUR LOCAL IP
 PORT = 5555
 PLAYERS = 4
 
@@ -23,6 +23,7 @@ PLAYERS = 4
 class Client:
 	game = None
 	clients = []
+	observers = []
 
 	# self.player points directly to the player object in the game associated with this client instance
 	def __init__(self, conn, player_id):
@@ -55,25 +56,62 @@ class Client:
 
 		return json.loads(package)
 
-	# Will send entire package
+	# will send entire package
 	def send(self, data):
 		self.conn.sendall(data)
 
-	# Send all relevant data to all connected clients
-	def sendTo(self, clients, message=''):
+	# send all relevant data to all connected clients
+	def sendTo(self, clients, observers, message=''):
 		discard_cards = Client.game.discard_pile.top_playable()
 		players_overview = Client.game.players_overview()
 		active_players = (Client.game.current_player, Client.game.reverse)
 		pickup_type = Client.game.pickup_deck.deck[0].type
 		active_draw = Client.game.no_to_draw
 
-		for client in clients:
-			_, player_cards = client.player.valid_cards()  # Returns current playable cards for particular player
+		for i, client in enumerate(clients):
+
+			# returns current playable cards for particular player
+			current_hand, player_cards = client.player.valid_cards()
+
+			# if we are playing out of our last hand, need to obfuscate cards
+			if current_hand == 'face_down':
+				player_cards = ['face_down'] + client.player.obfuscate_cards(player_cards)
+
+			# if we have no cards left, we need to be added to the back of the queue
+			elif current_hand is None:
+
+				# remove player from game
+				Client.game.remove_player(self.id)
+
+				# make all client ids match the new player ids
+				for sub_client in clients:
+					if sub_client.id > self.id:
+						sub_client.id -= 1
+
+				# also have to step down current player, not sure if this is correct logic though
+				if Client.game.current_player > self.id:
+					Client.game.current_player -= 1
+
+				Client.observers.append(clients.pop(i))
 
 			data = Data(
 				players_overview,
 				active_players,
 				player_cards,
+				pickup_type,
+				discard_cards,
+				active_draw,
+				message
+			)
+
+			client.send(data.encode())
+
+		for observer in observers:
+
+			data = Data(
+				players_overview,
+				active_players,
+				[],  # player cards
 				pickup_type,
 				discard_cards,
 				active_draw,
@@ -101,11 +139,11 @@ class Client:
 			try:
 				if was_valid is True:
 					log.info('Sending package to all')
-					self.sendTo(Client.clients, f'Yeet from server courtesy of {self.id}')
+					self.sendTo(Client.clients, Client.observers, f'Yeet from server courtesy of {self.id}')
 				else:
 					log.info(f'Sending package to {self.id}')
 					# need to wrap self in a list here as we try to iterate over it
-					self.sendTo([self], f'Yeet from server courtesy of {self.id}')
+					self.sendTo([self], [], f'Yeet from server courtesy of {self.id}')
 			except Exception as e:
 				print(e)
 
@@ -172,3 +210,4 @@ def main():
 				executor.submit(client.thread)
 
 			log.info('All clients connected...')
+			# send out map of player id and player names

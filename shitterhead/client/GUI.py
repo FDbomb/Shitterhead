@@ -181,9 +181,6 @@ class GUI:
 
 	def activeCards(self):
 
-		#self.discard_cards = data.discard_cards
-		#self.active_draw = data.active_draw
-
 		lines = [[] for _ in range(5)]  # big cards are 5 lines
 
 		# print pickup deck
@@ -226,14 +223,23 @@ class GUI:
 		cards = self.player_cards
 		lines = [[] for _ in range(6)]  # big cards are 5 lines + 1 line for index
 
-		for index, card in enumerate(cards):
+		# if we are working with face down cards, we must not show the cards
+		if cards[0] == 'face_down':
 
-			space, value = self.shortCardValues(card.value)
-			suit = suits_map[card.suit]
+			for index, card_type in enumerate(cards[1:]):
+				lines = self.bigFD(lines, card_type)
+				lines[5].append(' [{:02d}] '.format(index))
 
-			# add face up cards and their corresponding index below
-			lines = self.bigFU(lines, space, value, suit)
-			lines[5].append(' [{:02d}] '.format(index))
+		# otherwise we can show face up cards
+		else:
+			for index, card in enumerate(cards):
+
+				space, value = self.shortCardValues(card.value)
+				suit = suits_map[card.suit]
+
+				# add face up cards and their corresponding index below
+				lines = self.bigFU(lines, space, value, suit)
+				lines[5].append(' [{:02d}] '.format(index))
 
 		# not very readable function which prints certain number of cards per line
 		for i in range((len(cards) // CARDS_PER_LINE) + 1):

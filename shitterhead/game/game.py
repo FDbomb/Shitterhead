@@ -5,6 +5,7 @@
 # to do
 # - fix burn logic to not burn 5 cards
 # - also don't think 4 * 4s will burn in first time of the game, low priority
+# - fix play cards for when None is returned from validCards
 
 from collections import deque
 import logging as log
@@ -17,7 +18,7 @@ from common.data import Move
 
 FACE_DOWN_CARDS = 3
 FACE_UP_CARDS = 3
-CARDS_DEALT = 15  # NEED TO FIX THIS - CAN BUMP DECK SIZE OR DYNAMICALLY CHANGE THIS
+CARDS_DEALT = 6
 CARDS_PER_LINE = 20
 
 
@@ -70,9 +71,10 @@ class Player:
 			return 'face_up', self.face_up
 		elif len(self.face_down) != 0:
 			return 'face_down', self.face_down
-		# We should have won at this point
+
+		# we have no cards so we are out, send this to server.py to deal with
 		else:
-			return [], None
+			return None, []
 
 	def execute_move(self, move):
 		if move.action == 'Play':
@@ -93,7 +95,9 @@ class Player:
 	def play_cards(self, index):  # make index an array to play multiple cards
 
 		try:  # try to pop selected cards out of player hand
-			cards = [self.in_hand.pop(i) for i in sorted(index, reverse=True)]  # Pop indexed cards, need to pop in reverse over to preserve index
+			_, active_hand = self.valid_cards()
+			cards = [active_hand.pop(i) for i in sorted(index, reverse=True)]  # Pop indexed cards, need to pop in reverse over to preserve index
+
 		except IndexError:  # if we can't pop cards, we have been given bad index so is_valid is False
 			return False
 
@@ -344,18 +348,23 @@ class Game:
 								action = 'Burn'
 
 			elif action == 'Pickup':
-				# Assume pickup is true
-				is_valid = True
-				_, playable_cards = self.players[player].valid_cards()
-				print(playable_cards)
-				# However if you can play something else, not valid to pickup
-				for card in playable_cards:
-					print(f'card: {card.value}')
-					_, other_valid = self.is_valid_move(player, Move('Play', [card]))
-					print(other_valid)
-					if other_valid is True:
-						is_valid = False
-						break
+
+				# cannot pickup if there is a draw card
+				if self.active_draw_card is None:
+
+					# otherwise assume pickup is true
+					is_valid = True
+					active_hand, playable_cards = self.players[player].valid_cards()
+
+					# if we are playing out of face down cards, pickup will always be true
+					# however if you can play something else, not valid to pickup
+					for card in playable_cards:
+						print(f'card: {card.value}')
+						_, other_valid = self.is_valid_move(player, Move('Play', [card]))
+						print(other_valid)
+						if other_valid is True:
+							is_valid = False
+							break
 		else:
 			if action == 'Play':
 
@@ -444,6 +453,10 @@ class Game:
 							self.current_player += 1
 						else:
 							self.current_player -= 1
+
+					# don't update active card for skip but we need to do it for queen
+					if value == 'Queen':
+						self.active_card = cards[0]
 
 				# For each reverse card, toggle self.reverse
 				elif value == 'Reverse':
